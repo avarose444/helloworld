@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { connection } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/server";
 
 type Movie = {
   id: number;
@@ -34,6 +34,7 @@ export default async function Home() {
   // Render at request time so new rows in Supabase show up without a redeploy.
   await connection();
 
+  const supabase = await createClient();
   const { data: movies, error } = await supabase
     .from("movies")
     .select("id, title, director, year, image_url")
