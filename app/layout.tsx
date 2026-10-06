@@ -16,8 +16,8 @@ const courierPrime = Courier_Prime({
 });
 
 export const metadata: Metadata = {
-  title: "La Nouvelle Vague",
-  description: "A list of favorite films, fetched live from Supabase.",
+  title: "Caption the City",
+  description: "Post a photo of New York. AI writes French New Wave subtitles. Everyone votes.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

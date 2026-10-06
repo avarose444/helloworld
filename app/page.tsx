@@ -1,68 +1,47 @@
-import Image from "next/image";
+import Link from "next/link";
 import { connection } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import SubtitledPhoto from "@/app/components/SubtitledPhoto";
+import TitleCard from "@/app/components/TitleCard";
+import VoteButtons from "@/app/components/VoteButtons";
+import { bestCaption, getMyVotes, getRecentPhotos, getTopCaptions } from "@/lib/captions";
+import { getCurrentUser } from "@/lib/profile";
 
-type Movie = {
-  id: number;
-  title: string;
-  director: string;
-  year: number;
-  image_url: string | null;
-};
-
-// Godard-style title card: letters cycle through rouge, blanc, bleu.
-const TITLE_COLORS = ["text-rouge", "text-white", "text-bleu"];
-
-function TitleCard({ text }: { text: string }) {
-  let i = 0;
-  return (
-    <span aria-label={text}>
-      {text.split("").map((char, index) =>
-        char === " " ? (
-          <span key={index}> </span>
-        ) : (
-          <span key={index} aria-hidden className={TITLE_COLORS[i++ % TITLE_COLORS.length]}>
-            {char}
-          </span>
-        )
-      )}
-    </span>
-  );
-}
-
-export default async function Home() {
-  // Render at request time so new rows in Supabase show up without a redeploy.
+export default async function FeedPage() {
   await connection();
 
-  const supabase = await createClient();
-  const { data: movies, error } = await supabase
-    .from("movies")
-    .select("id, title, director, year, image_url")
-    .order("year", { ascending: true });
+  const [{ user }, photos, [captionOfTheDay]] = await Promise.all([
+    getCurrentUser(),
+    getRecentPhotos(),
+    getTopCaptions(24, 1),
+  ]);
 
-  const fetchedAt = new Date().toLocaleString("fr-FR", {
-    timeZone: "Europe/Paris",
-    dateStyle: "long",
-    timeStyle: "medium",
-  });
+  const leaders = photos.map((photo) => ({ photo, caption: bestCaption(photo) }));
+  const myVotes = await getMyVotes(
+    user?.id,
+    [...leaders.map((l) => l.caption?.id), captionOfTheDay?.id].filter((id): id is string => !!id)
+  );
 
   return (
-    <div className="flex flex-col flex-1">
-      <header className="bg-black px-6 py-14 sm:px-16 sm:py-20">
+    <div className="flex flex-1 flex-col">
+      <header className="bg-black px-6 py-14 sm:px-16">
         <div className="mx-auto max-w-5xl">
           <p className="font-mono text-sm uppercase tracking-[0.3em] text-zinc-400">
-            Un film de Supabase
+            New York, sous-titré
           </p>
           <h1 className="mt-4 font-display text-6xl uppercase leading-none tracking-wide sm:text-8xl">
-            <TitleCard text="La Nouvelle Vague" />
+            <TitleCard text="Caption the City" />
           </h1>
           <p className="mt-6 max-w-xl font-mono text-zinc-300">
-            A few favorite films, pulled live from the{" "}
-            <span className="text-white underline decoration-rouge decoration-2 underline-offset-4">
-              movies
-            </span>{" "}
-            table.
+            Post a photo from your weekend. AI writes it subtitles like a 1960s French film. Everyone votes on the best one.
           </p>
+          <div className="mt-8">
+            <Link
+              href={user ? "/post" : "/login"}
+              className="inline-block bg-rouge px-6 py-3 font-display text-lg uppercase tracking-widest text-white hover:bg-bleu"
+            >
+              {user ? "Post a scene" : "Sign in to post & vote"}
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -73,55 +52,85 @@ export default async function Home() {
       </div>
 
       <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-14 sm:px-16">
-        {error ? (
-          <p className="border-2 border-rouge p-4 font-mono text-rouge">
-            Could not load movies: {error.message}
-          </p>
-        ) : !movies || movies.length === 0 ? (
-          <p className="font-mono">No movies found.</p>
+        {captionOfTheDay?.photos && (
+          <section className="mb-16 grid gap-8 border-2 border-black bg-white p-6 sm:grid-cols-[240px_1fr] sm:p-8">
+            <Link href={`/p/${captionOfTheDay.photos.id}`}>
+              <SubtitledPhoto
+                src={captionOfTheDay.photos.image_url}
+                alt={`Photo captioned: ${captionOfTheDay.body}`}
+                sizes="240px"
+              />
+            </Link>
+            <div className="flex flex-col justify-center">
+              <p className="font-mono text-xs uppercase tracking-[0.3em] text-rouge">Caption of the day</p>
+              <p className="mt-3 font-display text-3xl uppercase leading-tight sm:text-4xl">
+                “{captionOfTheDay.body}”
+              </p>
+              <p className="mt-3 font-mono text-sm text-zinc-600">
+                {captionOfTheDay.photos.neighborhood ?? "Somewhere in New York"}
+              </p>
+              <div className="mt-5 flex items-center gap-4">
+                <VoteButtons
+                  captionId={captionOfTheDay.id}
+                  upvotes={captionOfTheDay.upvotes}
+                  downvotes={captionOfTheDay.downvotes}
+                  myVote={myVotes[captionOfTheDay.id] ?? 0}
+                  signedIn={!!user}
+                />
+                <Link href="/top" className="font-mono text-xs uppercase tracking-[0.2em] underline underline-offset-4">
+                  This week&apos;s top 10 →
+                </Link>
+              </div>
+            </div>
+          </section>
+        )}
+
+        <div className="flex items-end justify-between gap-4">
+          <h2 className="font-display text-4xl uppercase">Fresh scenes</h2>
+          <Link href="/top" className="font-mono text-xs uppercase tracking-[0.2em] underline underline-offset-4">
+            Top this week
+          </Link>
+        </div>
+
+        {leaders.length === 0 ? (
+          <p className="mt-8 font-mono text-zinc-600">No scenes yet. Be the first to post one.</p>
         ) : (
-          <ul className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-            {(movies as Movie[]).map((movie, index) => (
-              <li key={movie.id} className="group">
-                <div className="relative aspect-[2/3] overflow-hidden border-2 border-black bg-black">
-                  {movie.image_url ? (
-                    <Image
-                      src={movie.image_url}
-                      alt={`Poster for ${movie.title}`}
-                      fill
-                      sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                      className="object-cover grayscale contrast-125 transition duration-500 group-hover:scale-105 group-hover:grayscale-0"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center p-6 text-center font-display text-4xl uppercase text-white">
-                      {movie.title}
-                    </div>
-                  )}
-                  <span className="absolute left-0 top-0 bg-rouge px-3 py-1 font-mono text-sm font-bold text-white">
-                    N° {String(index + 1).padStart(2, "0")}
-                  </span>
-                </div>
-                <div className="mt-4 flex items-start justify-between gap-4">
+          <ul className="mt-8 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+            {leaders.map(({ photo, caption }) => (
+              <li key={photo.id}>
+                <Link href={`/p/${photo.id}`} className="block">
+                  <SubtitledPhoto
+                    src={photo.image_url}
+                    alt={caption ? `Photo captioned: ${caption.body}` : "Photo from the city"}
+                    subtitle={caption?.body}
+                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                  />
+                </Link>
+                <div className="mt-3 flex items-start justify-between gap-3">
                   <div>
-                    <h2 className="font-display text-2xl uppercase leading-tight tracking-wide">
-                      {movie.title}
-                    </h2>
-                    <p className="mt-1 font-mono text-sm text-zinc-700">
-                      réal. {movie.director}
-                    </p>
+                    <p className="font-mono text-sm text-zinc-700">{photo.neighborhood ?? "Somewhere in New York"}</p>
+                    <Link
+                      href={`/p/${photo.id}`}
+                      className="font-mono text-xs uppercase tracking-[0.2em] underline underline-offset-4"
+                    >
+                      {photo.captions.length} captions →
+                    </Link>
                   </div>
-                  <p className="font-display text-2xl text-bleu">{movie.year}</p>
+                  {caption && (
+                    <VoteButtons
+                      captionId={caption.id}
+                      upvotes={caption.upvotes}
+                      downvotes={caption.downvotes}
+                      myVote={myVotes[caption.id] ?? 0}
+                      signedIn={!!user}
+                    />
+                  )}
                 </div>
               </li>
             ))}
           </ul>
         )}
       </main>
-
-      <footer className="bg-black px-6 py-8 text-center font-mono text-sm text-zinc-400 sm:px-16">
-        <span className="font-display text-2xl tracking-widest text-white">FIN</span>
-        <p className="mt-2">Chargé le {fetchedAt}</p>
-      </footer>
     </div>
   );
 }

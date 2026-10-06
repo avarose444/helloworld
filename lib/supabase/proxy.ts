@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { supabaseAnonKey, supabaseUrl } from "./env";
 
-const PROTECTED_PATHS = ["/profile", "/welcome", "/screening-room"];
+const PROTECTED_PATHS = ["/profile", "/welcome", "/screening-room", "/post"];
 
 // Refreshes the auth session cookie and guards logged-in-only routes.
 export async function updateSession(request: NextRequest) {

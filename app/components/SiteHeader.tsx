@@ -14,6 +14,12 @@ export default async function SiteHeader() {
               N<span className="text-rouge">·</span>V
             </Link>
             <Link href="/" className="hover:text-white">
+              Feed
+            </Link>
+            <Link href="/top" className="hover:text-white">
+              Top
+            </Link>
+            <Link href="/films" className="hover:text-white">
               Films
             </Link>
             {user && (
@@ -25,6 +31,9 @@ export default async function SiteHeader() {
 
           {user ? (
             <div className="flex items-center gap-4">
+              <Link href="/post" className="bg-rouge px-3 py-1.5 font-bold text-white hover:bg-bleu">
+                + Post
+              </Link>
               <Link href="/profile" className="flex items-center gap-2 hover:text-white">
                 <Avatar profile={profile} size={28} />
                 <span className="hidden sm:inline">{profile?.first_name || "Profile"}</span>
