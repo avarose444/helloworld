@@ -1,7 +1,11 @@
 import "server-only";
 
 const API_URL = "https://generativelanguage.googleapis.com/v1beta/models";
-export const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+// Tried in order. The free tier is sometimes overloaded, so if one model is
+// busy (503) or rate-limited (429) we fall back to the next.
+const GEMINI_MODELS = process.env.GEMINI_MODEL
+  ? [process.env.GEMINI_MODEL]
+  : ["gemini-flash-lite-latest", "gemini-flash-latest", "gemini-2.5-flash"];
 
 type CaptionRequest = {
   imageBase64: string;
@@ -31,33 +35,47 @@ export async function generateCaptions(request: CaptionRequest) {
   if (!apiKey) throw new Error("Missing GEMINI_API_KEY environment variable.");
 
   const prompt = buildCaptionPrompt(request);
-  const response = await fetch(`${API_URL}/${GEMINI_MODEL}:generateContent`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-    body: JSON.stringify({
-      contents: [
-        {
-          role: "user",
-          parts: [
-            { inlineData: { mimeType: request.mimeType, data: request.imageBase64 } },
-            { text: prompt },
-          ],
-        },
-      ],
-      generationConfig: {
-        temperature: 1,
-        responseMimeType: "application/json",
-        responseSchema: { type: "ARRAY", items: { type: "STRING" } },
+  const body = JSON.stringify({
+    contents: [
+      {
+        role: "user",
+        parts: [
+          { inlineData: { mimeType: request.mimeType, data: request.imageBase64 } },
+          { text: prompt },
+        ],
       },
-    }),
+    ],
+    generationConfig: {
+      temperature: 1,
+      responseMimeType: "application/json",
+      responseSchema: { type: "ARRAY", items: { type: "STRING" } },
+    },
   });
 
-  if (!response.ok) {
-    const detail = await response.text();
-    console.error("Gemini error", response.status, detail);
+  let response: Response | null = null;
+  let model = GEMINI_MODELS[0];
+  for (model of GEMINI_MODELS) {
+    try {
+      response = await fetch(`${API_URL}/${model}:generateContent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+        body,
+        signal: AbortSignal.timeout(30_000),
+      });
+    } catch (error) {
+      console.error("Gemini request failed", model, error);
+      response = null;
+      continue;
+    }
+    if (response.ok || ![429, 500, 503].includes(response.status)) break;
+    console.error("Gemini busy", model, response.status);
+  }
+
+  if (!response?.ok) {
+    if (response) console.error("Gemini error", response.status, await response.text());
     throw new Error(
-      response.status === 429
-        ? "The caption writer is out of breath (rate limit). Try again in a minute."
+      !response || response.status === 429 || response.status === 503
+        ? "The caption writer is swamped right now. Try again in a minute."
         : "The caption writer couldn't read this photo. Try another one."
     );
   }
@@ -83,5 +101,5 @@ export async function generateCaptions(request: CaptionRequest) {
     throw new Error("The caption writer came back empty-handed. Try another photo.");
   }
 
-  return { captions: cleaned, prompt, model: GEMINI_MODEL };
+  return { captions: cleaned, prompt, model };
 }
