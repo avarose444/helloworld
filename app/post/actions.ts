@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { generateCaptions } from "@/lib/gemini";
+import { generateCaptions } from "@/lib/pipeline";
 import { hoursAgo } from "@/lib/captions";
 import { NEIGHBORHOODS } from "@/lib/neighborhoods";
 import { createClient } from "@/lib/supabase/server";
@@ -51,6 +51,9 @@ export async function createPost(formData: FormData): Promise<{ error: string }>
   let result;
   try {
     result = await generateCaptions({
+      supabase,
+      userId: user.id,
+      source: "post",
       imageBase64: bytes.toString("base64"),
       mimeType: photo.type,
       neighborhood,
@@ -74,6 +77,11 @@ export async function createPost(formData: FormData): Promise<{ error: string }>
     .select("id")
     .single();
   if (photoError) return { error: photoError.message };
+
+  // The generation was logged before the photo existed; link them now.
+  if (result.requestId) {
+    await supabase.from("generation_requests").update({ photo_id: saved.id }).eq("id", result.requestId);
+  }
 
   const { error: captionError } = await supabase.from("captions").insert(
     result.captions.map((body) => ({
@@ -112,6 +120,10 @@ export async function generateMoreCaptions(photoId: string): Promise<{ error?: s
   let result;
   try {
     result = await generateCaptions({
+      supabase,
+      userId: user.id,
+      source: "more",
+      photoId: photo.id,
       imageBase64: bytes.toString("base64"),
       mimeType: image.headers.get("content-type") ?? "image/jpeg",
       neighborhood: photo.neighborhood,
