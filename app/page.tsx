@@ -26,7 +26,7 @@ export default async function FeedPage() {
       <header className="bg-black px-6 py-14 sm:px-16">
         <div className="mx-auto max-w-5xl">
           <p className="font-mono text-sm uppercase tracking-[0.3em] text-zinc-400">
-            New York, sous-titré
+            New York, with subtitles
           </p>
           <h1 className="mt-4 font-display text-6xl uppercase leading-none tracking-wide sm:text-8xl">
             <TitleCard text="Caption the City" />
@@ -34,14 +34,16 @@ export default async function FeedPage() {
           <p className="mt-6 max-w-xl font-mono text-zinc-300">
             Post a photo from your weekend. AI writes it subtitles like a 1960s French film. Everyone votes on the best one.
           </p>
-          <div className="mt-8">
-            <Link
-              href={user ? "/post" : "/login"}
-              className="inline-block bg-rouge px-6 py-3 font-display text-lg uppercase tracking-widest text-white hover:bg-bleu"
-            >
-              {user ? "Post a scene" : "Sign in to post & vote"}
-            </Link>
-          </div>
+          {!user && (
+            <div className="mt-8">
+              <Link
+                href="/login"
+                className="inline-block bg-rouge px-6 py-3 font-display text-lg uppercase tracking-widest text-white hover:bg-bleu"
+              >
+                Sign in to post & vote
+              </Link>
+            </div>
+          )}
         </div>
       </header>
 
@@ -86,14 +88,14 @@ export default async function FeedPage() {
         )}
 
         <div className="flex items-end justify-between gap-4">
-          <h2 className="font-display text-4xl uppercase">Fresh scenes</h2>
+          <h2 className="font-display text-4xl uppercase">Latest photos</h2>
           <Link href="/top" className="font-mono text-xs uppercase tracking-[0.2em] underline underline-offset-4">
             Top this week
           </Link>
         </div>
 
         {leaders.length === 0 ? (
-          <p className="mt-8 font-mono text-zinc-600">No scenes yet. Be the first to post one.</p>
+          <p className="mt-8 font-mono text-zinc-600">No photos yet. Be the first to post one.</p>
         ) : (
           <ul className="mt-8 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
             {leaders.map(({ photo, caption }) => (

@@ -1,6 +1,7 @@
 import Image from "next/image";
 
-// A photo with a caption laid over it like a film subtitle.
+// A photo with its caption printed underneath, like a subtitle card below the
+// frame, so the text stays readable on busy photos.
 export default function SubtitledPhoto({
   src,
   alt,
@@ -15,16 +16,15 @@ export default function SubtitledPhoto({
   priority?: boolean;
 }) {
   return (
-    <div className="relative aspect-[4/5] overflow-hidden border-2 border-black bg-black">
-      <Image src={src} alt={alt} fill sizes={sizes} priority={priority} className="object-cover" />
+    <figure className="border-2 border-black bg-black">
+      <div className="relative aspect-[4/5] overflow-hidden">
+        <Image src={src} alt={alt} fill sizes={sizes} priority={priority} className="object-cover" />
+      </div>
       {subtitle && (
-        <p
-          className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-5 pb-5 pt-16 text-center font-mono text-lg font-bold leading-snug text-white sm:text-xl"
-          style={{ textShadow: "0 0 3px #000, 0 1px 2px #000" }}
-        >
+        <figcaption className="border-t-2 border-black px-4 py-3 text-center font-mono text-base font-bold leading-snug text-white sm:text-lg">
           {subtitle}
-        </p>
+        </figcaption>
       )}
-    </div>
+    </figure>
   );
 }

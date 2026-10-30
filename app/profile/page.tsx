@@ -8,8 +8,8 @@ export default async function ProfilePage() {
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-14 sm:px-16">
-      <p className="font-mono text-xs uppercase tracking-[0.3em] text-rouge">Votre profil</p>
-      <h1 className="mt-3 font-display text-5xl uppercase leading-none sm:text-6xl">Profile</h1>
+      <p className="font-mono text-xs uppercase tracking-[0.3em] text-rouge">Settings</p>
+      <h1 className="mt-3 font-display text-5xl uppercase leading-none sm:text-6xl">Edit profile</h1>
       <div className="mt-10 border-2 border-black bg-white p-6 sm:p-10">
         <ProfileForm profile={profile} />
       </div>

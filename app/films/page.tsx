@@ -2,6 +2,8 @@ import Image from "next/image";
 import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import TitleCard from "@/app/components/TitleCard";
+import { getCurrentUser } from "@/lib/profile";
+import FavoriteButton from "./FavoriteButton";
 
 type Movie = {
   id: number;
@@ -15,35 +17,32 @@ export default async function FilmsPage() {
   // Render at request time so new rows in Supabase show up without a redeploy.
   await connection();
 
-  const supabase = await createClient();
+  const [supabase, { user, profile }] = await Promise.all([createClient(), getCurrentUser()]);
   const { data: movies, error } = await supabase
     .from("movies")
     .select("id, title, director, year, image_url")
     .order("year", { ascending: true });
-
-  const fetchedAt = new Date().toLocaleString("fr-FR", {
-    timeZone: "Europe/Paris",
-    dateStyle: "long",
-    timeStyle: "medium",
-  });
 
   return (
     <div className="flex flex-col flex-1">
       <header className="bg-black px-6 py-14 sm:px-16 sm:py-20">
         <div className="mx-auto max-w-5xl">
           <p className="font-mono text-sm uppercase tracking-[0.3em] text-zinc-400">
-            Un film de Supabase
+            Pick your favorite
           </p>
           <h1 className="mt-4 font-display text-6xl uppercase leading-none tracking-wide sm:text-8xl">
-            <TitleCard text="La Nouvelle Vague" />
+            <TitleCard text="Films" />
           </h1>
           <p className="mt-6 max-w-xl font-mono text-zinc-300">
-            A few favorite films, pulled live from the{" "}
-            <span className="text-white underline decoration-rouge decoration-2 underline-offset-4">
-              movies
-            </span>{" "}
-            table.
+            The classic films that inspired Caption the City&apos;s style. Tap the{" "}
+            <span className="text-white">☆</span> on a film to make it your favorite. It shows on your profile.
           </p>
+          {user && (
+            <p className="mt-4 font-mono text-sm text-zinc-400">
+              Your favorite:{" "}
+              <span className="text-white">{profile?.favorite_film ?? "none yet"}</span>
+            </p>
+          )}
         </div>
       </header>
 
@@ -78,9 +77,17 @@ export default async function FilmsPage() {
                       {movie.title}
                     </div>
                   )}
-                  <span className="absolute left-0 top-0 bg-rouge px-3 py-1 font-mono text-sm font-bold text-white">
-                    N° {String(index + 1).padStart(2, "0")}
+                  <span className="absolute left-0 top-0 bg-black px-3 py-1 font-mono text-sm font-bold text-white">
+                    #{index + 1}
                   </span>
+                  <div className="absolute right-2 top-2">
+                    <FavoriteButton
+                      movieId={movie.id}
+                      title={movie.title}
+                      isFavorite={profile?.favorite_film === movie.title}
+                      signedIn={!!user}
+                    />
+                  </div>
                 </div>
                 <div className="mt-4 flex items-start justify-between gap-4">
                   <div>
@@ -88,7 +95,7 @@ export default async function FilmsPage() {
                       {movie.title}
                     </h2>
                     <p className="mt-1 font-mono text-sm text-zinc-700">
-                      réal. {movie.director}
+                      Directed by {movie.director}
                     </p>
                   </div>
                   <p className="font-display text-2xl text-bleu">{movie.year}</p>
@@ -98,11 +105,6 @@ export default async function FilmsPage() {
           </ul>
         )}
       </main>
-
-      <footer className="bg-black px-6 py-8 text-center font-mono text-sm text-zinc-400 sm:px-16">
-        <span className="font-display text-2xl tracking-widest text-white">FIN</span>
-        <p className="mt-2">Chargé le {fetchedAt}</p>
-      </footer>
     </div>
   );
 }

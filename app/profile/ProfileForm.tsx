@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useState } from "react";
 import { updateProfile, type FormState } from "./actions";
 import { buttonClass, inputClass, labelClass } from "@/app/components/styles";
@@ -49,10 +50,15 @@ export default function ProfileForm({ profile }: { profile: Profile | null }) {
             <input name="last_name" defaultValue={profile?.last_name ?? ""} className={inputClass} />
           </label>
         </div>
-        <label className="block space-y-2">
+        <div className="space-y-2">
           <span className={labelClass}>Favorite film</span>
-          <input name="favorite_film" defaultValue={profile?.favorite_film ?? ""} className={inputClass} />
-        </label>
+          <p className="font-mono text-sm">
+            {profile?.favorite_film ?? "None yet"} ·{" "}
+            <Link href="/films" className="underline underline-offset-4">
+              {profile?.favorite_film ? "Change" : "Pick one"} on the Films page ☆
+            </Link>
+          </p>
+        </div>
         <label className="block space-y-2">
           <span className={labelClass}>Email</span>
           <input value={profile?.email ?? ""} disabled className={`${inputClass} bg-zinc-100 text-zinc-500`} />

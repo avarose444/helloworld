@@ -39,14 +39,13 @@ export async function saveName(_prev: FormState, formData: FormData): Promise<Fo
       email: user.email,
       first_name: firstName,
       last_name: lastName,
-      favorite_film: text(formData, "favorite_film"),
       updated_at: new Date().toISOString(),
     });
 
   if (error) return { error: error.message };
 
   revalidatePath("/", "layout");
-  redirect("/screening-room");
+  redirect("/me");
 }
 
 // Used by /profile: names, favorite film, and an optional new photo.
@@ -58,7 +57,6 @@ export async function updateProfile(_prev: FormState, formData: FormData): Promi
     email: user.email ?? null,
     first_name: text(formData, "first_name"),
     last_name: text(formData, "last_name"),
-    favorite_film: text(formData, "favorite_film"),
     updated_at: new Date().toISOString(),
   };
 

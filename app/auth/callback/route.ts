@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
         // First-time users missing a name are prompted to add one.
         const hasName = profile?.first_name?.trim() && profile?.last_name?.trim();
-        return NextResponse.redirect(new URL(hasName ? "/screening-room" : "/welcome", origin));
+        return NextResponse.redirect(new URL(hasName ? "/me" : "/welcome", origin));
       }
     }
   }

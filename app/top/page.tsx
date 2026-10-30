@@ -12,7 +12,7 @@ export default async function TopPage() {
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-14 sm:px-16">
-      <p className="font-mono text-xs uppercase tracking-[0.3em] text-rouge">Palmarès</p>
+      <p className="font-mono text-xs uppercase tracking-[0.3em] text-rouge">Leaderboard</p>
       <h1 className="mt-3 font-display text-5xl uppercase leading-none sm:text-6xl">Top 10 this week</h1>
       <p className="mt-4 font-mono text-zinc-700">The highest-voted captions from the last seven days.</p>
 

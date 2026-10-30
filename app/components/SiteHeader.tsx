@@ -10,8 +10,8 @@ export default async function SiteHeader() {
       <nav className="border-b border-white/10 bg-black px-6 sm:px-16">
         <div className="mx-auto flex min-h-14 max-w-5xl flex-wrap items-center justify-between gap-x-6 gap-y-2 py-3 font-mono text-xs uppercase tracking-[0.2em] text-zinc-300">
           <div className="flex items-center gap-6">
-            <Link href="/" className="font-display text-xl tracking-widest text-white">
-              N<span className="text-rouge">·</span>V
+            <Link href="/" className="font-display text-lg tracking-widest text-white">
+              Caption <span className="text-rouge">the</span> City
             </Link>
             <Link href="/" className="hover:text-white">
               Feed
@@ -22,11 +22,6 @@ export default async function SiteHeader() {
             <Link href="/films" className="hover:text-white">
               Films
             </Link>
-            {user && (
-              <Link href="/screening-room" className="hover:text-white">
-                Screening Room
-              </Link>
-            )}
           </div>
 
           {user ? (
@@ -34,9 +29,9 @@ export default async function SiteHeader() {
               <Link href="/post" className="bg-rouge px-3 py-1.5 font-bold text-white hover:bg-bleu">
                 + Post
               </Link>
-              <Link href="/profile" className="flex items-center gap-2 hover:text-white">
+              <Link href="/me" className="flex items-center gap-2 hover:text-white">
                 <Avatar profile={profile} size={28} />
-                <span className="hidden sm:inline">{profile?.first_name || "Profile"}</span>
+                <span>My profile</span>
               </Link>
               <form action="/auth/signout" method="post">
                 <button type="submit" className="uppercase tracking-[0.2em] hover:text-rouge">

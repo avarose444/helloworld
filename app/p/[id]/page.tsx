@@ -40,7 +40,7 @@ export default async function PhotoPage({ params }: PageProps<"/p/[id]">) {
         </div>
 
         <section>
-          <p className="font-mono text-xs uppercase tracking-[0.3em] text-rouge">Les sous-titres</p>
+          <p className="font-mono text-xs uppercase tracking-[0.3em] text-rouge">Captions</p>
           <h1 className="mt-2 font-display text-4xl uppercase leading-none">Vote for the best caption</h1>
           {!user && (
             <p className="mt-4 border-2 border-bleu p-3 font-mono text-sm text-bleu">
